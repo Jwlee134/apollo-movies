@@ -1,17 +1,18 @@
 import { gql, useQuery } from "@apollo/client";
 import React from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import styled from "styled-components";
+import Movie from "../components/Movie";
 
 const Container = styled.div`
-  height: 100vh;
   background-image: linear-gradient(-45deg, #d754ab, #fd723a);
   width: 100%;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
   color: white;
   overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 `;
 
 const Column = styled.div`
@@ -44,6 +45,32 @@ const Poster = styled.img`
   border-radius: 10px;
 `;
 
+const Movies = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 25px;
+  width: 80%;
+  margin: 50px 0px;
+`;
+
+const MainContainer = styled.div`
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 100vh;
+`;
+
+const Suggestions = styled.span`
+  font-size: 30px;
+`;
+
+const SLink = styled(Link)`
+  text-decoration: none;
+  color: white;
+  margin-top: 20px;
+  font-size: 20px;
+`;
+
 interface Id {
   id: string;
 }
@@ -57,6 +84,12 @@ const GET_MOVIE = gql`
       language
       rating
       description_intro
+      isLiked @client
+    }
+    suggestions(id: $id) {
+      id
+      medium_cover_image
+      isLiked @client
     }
   }
 `;
@@ -71,20 +104,40 @@ const Detail = () => {
 
   return (
     <Container>
-      <Column>
-        <Title>{loading ? "Loading..." : data.movie.title}</Title>
-        {!loading && data.movie && (
-          <>
-            <Subtitle>
-              {data.movie.language} · {data.movie.rating}
-            </Subtitle>
-            <Description>{data.movie.description_intro}</Description>
-          </>
-        )}
-      </Column>
-      <ImgColumn>
-        <Poster src={data && data.movie && data.movie.large_cover_image} />
-      </ImgColumn>
+      {loading ? (
+        <MainContainer>
+          <Title>Loading...</Title>
+        </MainContainer>
+      ) : (
+        <>
+          <SLink to="/">Home</SLink>
+          <MainContainer>
+            <Column>
+              <Title>
+                {data.movie.title} {data.movie.isLiked ? "🧡" : "💔"}
+              </Title>
+              <Subtitle>
+                {data?.movie?.language} · {data?.movie?.rating}
+              </Subtitle>
+              <Description>{data?.movie?.description_intro}</Description>
+            </Column>
+            <ImgColumn>
+              <Poster src={data?.movie?.large_cover_image} />
+            </ImgColumn>
+          </MainContainer>
+          <Suggestions>Suggestions</Suggestions>
+          <Movies>
+            {data?.suggestions?.map((movie: any) => (
+              <Movie
+                key={movie.id}
+                id={movie.id}
+                bg={movie.medium_cover_image}
+                isLiked={movie.isLiked}
+              />
+            ))}
+          </Movies>
+        </>
+      )}
     </Container>
   );
 };
